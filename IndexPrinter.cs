@@ -85,7 +85,7 @@ namespace LineCnt
 
             iStack.Push(new IndexPrintItem(children[count - 1], true, depth + 1));
 
-            for (int i = count - 2; i > 0; i--)
+            for (int i = count - 2; i >= 0; i--)
             {
                 iStack.Push(new IndexPrintItem(children[i], false, depth + 1));
             }

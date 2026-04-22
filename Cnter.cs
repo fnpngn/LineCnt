@@ -71,11 +71,6 @@ namespace LineCnt
             // Create dir tree
             foreach (DirectoryInfo info in rootDirInfo.EnumerateDirectories("*", SearchOption.AllDirectories))
             {
-                if (info.Name.Contains("ref"))
-                {
-
-                    Console.WriteLine("Ref");
-                }
                 if (IsDirectoryBlacklisted(Path.GetFileName(info.FullName.AsSpan())))
                 {
                     continue;
@@ -103,7 +98,7 @@ namespace LineCnt
                 }
 
                 if (IsExtBlacklisted(Path.GetExtension(fileName.AsSpan())))
-                {
+                {                    
                     continue;
                 }
 
