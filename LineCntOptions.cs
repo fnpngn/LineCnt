@@ -4,8 +4,13 @@
     {
         public bool DoSerialize;
         public bool DoSerializeShallow;
+        public bool ShowHelp;
         public string RootPath;
         public string[] Patterns;
+        public string[] ExcludeDirectories;
+#if DEBUG
+        public bool DebugDump;
+#endif
 
         private static LineCntOptions _instance;
 
@@ -42,27 +47,43 @@
                 args = args.Slice(1, args.Length - 1);
             }
 
-            int settingsArgs = 0;
-            foreach (ReadOnlySpan<char> arg in args)
+            int argsLength = args.Length;
+            int index = 0;
+            for (index = 0; index < argsLength; index++)
             {
+                ReadOnlySpan<char> arg = args[index];
+
                 if (IsOptionArg(arg, "i", "index"))
                 {
                     DoSerialize = true;
-                    settingsArgs++;
                 }
                 else if (IsOptionArg(arg, "is", "index-shallow"))
                 {
                     DoSerialize = true;
                     DoSerializeShallow = true;
-                    settingsArgs++;
                 }
+                else if (IsOptionArg(arg, "h", "help") || arg == "/?")
+                {
+                    ShowHelp = true;
+                }
+                else if (IsOptionArg(arg, "e", "exclude"))
+                {
+                    int taken = TakeExcludeDirectories(args.Slice(index, args.Length - index));
+                    index += taken;
+                }
+#if DEBUG
+                else if (IsOptionArg(arg, "dmp", "dump"))
+                {
+                    DebugDump = true;
+                }
+#endif
                 else
                 {
                     break;
                 }
             }
 
-            Patterns = GetSearchPatternsFromArgs(args.Slice(settingsArgs, args.Length - settingsArgs));
+            Patterns = GetSearchPatternsFromArgs(args.Slice(index, args.Length - index));
         }
 
         private static bool IsOptionArg(ReadOnlySpan<char> arg, ReadOnlySpan<char> shortName, ReadOnlySpan<char> longName)
@@ -82,9 +103,36 @@
             return arg.Slice(1, arg.Length - 1).Equals(shortName, StringComparison.Ordinal);
         }
 
+        private int TakeExcludeDirectories(ReadOnlySpan<string> args)
+        {
+            int taken = 0;
+            List<string> exclude = ConcurrentPool<List<string>>.Get().Take();
+
+            exclude.EnsureCapacity(args.Length);
+
+            foreach (string arg in args)
+            {
+                if (arg[0] == '-')
+                {
+                    return taken;
+                }
+
+                exclude.Add(arg);
+                taken++;
+            }
+
+            ExcludeDirectories = exclude.ToArray();
+
+            exclude.Clear();
+            ConcurrentPool<List<string>>.Get().Return(exclude);
+
+            return taken;
+        }
+
         private static string[] GetSearchPatternsFromArgs(ReadOnlySpan<string> args)
         {
-            List<string> patterns = new List<string>();
+            List<string> patterns = ConcurrentPool<List<string>>.Get().Take();
+            patterns.EnsureCapacity(args.Length);
 
             foreach (string arg in args)
             {
@@ -110,7 +158,11 @@
                 patterns.Add("*." + arg);
             }
 
-            return patterns.ToArray();
+            string[] array = patterns.ToArray();
+            patterns.Clear();
+
+            ConcurrentPool<List<string>>.Get().Return(patterns);
+            return array;
         }
     }
 }

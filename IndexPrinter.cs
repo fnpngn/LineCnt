@@ -38,6 +38,7 @@ namespace LineCnt
                 else if (depth < lastDepth)
                 {
                     indentationSequence.Pop(lastDepth - depth);
+                    lastDepth = depth;
                 }
 
                 if (isLast)

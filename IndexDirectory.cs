@@ -42,6 +42,7 @@
 
             Children = new List<IndexDirectory>();
             _files = new IndexFile[capacity];
+            _filesSorted = new SortedList<string, IndexFile>(capacity, StringComparer.Ordinal);
         }
 
         public IndexDirectory(string fullName, in DateTime lastModified)

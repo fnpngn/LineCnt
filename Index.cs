@@ -1,4 +1,6 @@
-﻿namespace LineCnt
+﻿using System.Text;
+
+namespace LineCnt
 {
     public class Index
     {
@@ -15,7 +17,6 @@
         public Index(IndexDirectory root) : this()
         {
             RootDirectory = root;
-
         }
 
 
@@ -30,12 +31,14 @@
 
         public IndexDirectory GetOrCreateDirectory(string fullName)
         {
-            if (_directories.TryGetValue(fullName, out var directory))
+            if (_directories.TryGetValue(fullName, out IndexDirectory? directory))
             {
                 return directory;
             }
 
-            return new IndexDirectory(fullName, default);
+            directory = new IndexDirectory(fullName, default);
+            _directories[fullName] = directory;
+            return directory;
         }
 
         public List<IndexDirectory> Flattened()
@@ -88,6 +91,23 @@
                 }
             }
         }
+
+#if DEBUG
+        public void DebugDumpDirectories()
+        {
+            StringBuilder sb = new StringBuilder(_directories.Count * 50);
+
+            sb.Append(_directories.Count);
+            sb.AppendLine(" directories");
+
+            foreach (var dir in _directories)
+            {
+                sb.AppendLine(dir.Value.FullName);
+            }
+
+            Console.WriteLine(sb.ToString());
+        }
+#endif
 
         private record struct CumulativeStackItem(IndexDirectory Directory, bool allChildrenProcessed);
     }

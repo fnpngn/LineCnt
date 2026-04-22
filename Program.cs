@@ -1,14 +1,14 @@
 ﻿using LineCnt;
 using Index = LineCnt.Index;
 
-if (args.Length > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "/?"))
+LineCntOptions.ParseFromArgs(args);
+LineCntOptions options = LineCntOptions.Get();
+
+if (options.ShowHelp)
 {
     PrintManual();
     return;
 }
-
-LineCntOptions.ParseFromArgs(args);
-LineCntOptions options = LineCntOptions.Get();
 
 if (options.DoSerialize || options.DoSerializeShallow)
 {
@@ -24,6 +24,13 @@ else
 {
     index = await Cnter.CntDirectoryAsync(options.RootPath);
 }
+
+#if DEBUG
+if (options.DebugDump)
+{
+    index.DebugDumpDirectories();
+}
+#endif
 
 Console.WriteLine(IndexPrinter.ToOutStringIndexedDirectories(index.RootDirectory));
 
