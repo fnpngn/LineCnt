@@ -1,11 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
 
 namespace LineCnt
 {
     public static partial class IndexPrinter
     {
-        private record struct IndexPrintItem(IndexDirectory Directory, bool IsLast, int depth);
+        private record struct IndexPrintItem(IndexDirectory Directory, bool IsLast, int Depth);
         public static string ToOutStringIndexedDirectories(IndexDirectory root, IIndexCharsetProvider? charsetProvider = null)
         {
             charsetProvider ??= IIndexCharsetProvider.GetDefault();
@@ -14,7 +13,6 @@ namespace LineCnt
             IndexCharset charset = charsetProvider.Get();
             IndentationSequence indentationSequence = new IndentationSequence(in charset);
 
-            int maxLineLength = 0;
             Stack<IndexPrintItem> iStack = new Stack<IndexPrintItem>();
 
             int pad = CalculatePadLength(root, iStack);
@@ -22,8 +20,6 @@ namespace LineCnt
             sb.Append(' ', pad - root.Name.Length + 1);
             sb.Append(root.TotalLineCount);
             sb.AppendLine();
-            //PrintFiles(root, sb, 0, ref charset);
-
 
             PrintFiles(iStack, root, sb, ref charset, indentationSequence.GetSpan(), pad);
             PushChildren(iStack, root, 0);

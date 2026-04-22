@@ -16,11 +16,18 @@
         public List<IndexDirectory> Children { get; init; }
 
         private IndexFile[] _files;
+        private SortedList<string, IndexFile> _filesSorted;
         private int _count;
         private int _nameLength;
 
 
-        public IndexDirectory() { }
+        public IndexDirectory(int capacity = 5)
+        {
+            _filesSorted = new SortedList<string, IndexFile>(capacity, StringComparer.Ordinal);
+            _files = Array.Empty<IndexFile>();
+            FullName = string.Empty;
+            Children = [];
+        }
         public IndexDirectory(string fullName, in DateTime lastModified, int capacity)
         {
             FullName = fullName;
@@ -49,6 +56,7 @@
 
             _files[_count++] = file;
             LineCount += file.Count;
+            _filesSorted.Add(file.Name, file);
         }
 
         public void Serialize(BinaryWriter writer, in IndexSerializationContext ctx)

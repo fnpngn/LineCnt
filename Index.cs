@@ -1,9 +1,5 @@
-﻿using System.IO;
-using System.Text;
-
-namespace LineCnt
+﻿namespace LineCnt
 {
-
     public class Index
     {
         public IndexDirectory? RootDirectory { get; private set; }
