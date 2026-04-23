@@ -2,7 +2,6 @@
   "profiles": {
     "LineCnt": {
       "commandName": "Project",
-      "commandLineArgs": "F:\\bk\\src\\Cringe3D"
     }
   }
 }
