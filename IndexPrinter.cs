@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace LineCnt
 {
@@ -16,10 +17,8 @@ namespace LineCnt
             Stack<IndexPrintItem> iStack = new Stack<IndexPrintItem>();
 
             int pad = CalculatePadLength(root, iStack);
-            sb.Append(root.Name);
-            sb.Append(' ', pad - root.Name.Length + 1);
-            sb.Append(root.TotalLineCount);
-            sb.AppendLine();
+
+            PrintDirectory(root, sb, ref charset, stackalloc char[2], pad, false);
 
             PrintFiles(iStack, root, sb, ref charset, indentationSequence.GetSpan(), pad);
             PushChildren(iStack, root, 0);
@@ -29,11 +28,6 @@ namespace LineCnt
             while (iStack.TryPop(out IndexPrintItem item))
             {
                 var (iDirectory, isLast, depth) = item;
-
-                if (iDirectory.TotalLineCount <= 0)
-                {
-                    continue;
-                }
 
                 if (depth > lastDepth)
                 {
@@ -52,17 +46,8 @@ namespace LineCnt
                 }
 
                 ReadOnlySpan<char> indent = indentationSequence.GetSpan();
-                ReadOnlySpan<char> directoryIndent = IndentationSequence.GetDirectory(indent);
 
-                sb.Append(directoryIndent);
-                sb.Append(isLast ? charset.Bottom : charset.Entry);
-                sb.Append(charset.EntryBody);
-
-                ReadOnlySpan<char> name = iDirectory.Name;
-                sb.Append(name);
-                sb.Append(' ', pad - name.Length - directoryIndent.Length + 1);
-                sb.Append(iDirectory.TotalLineCount);
-                sb.AppendLine();
+                PrintDirectory(iDirectory, sb, ref charset, indent, pad, isLast);
 
                 PrintFiles(iStack, iDirectory, sb, ref charset, indent, pad);
 
@@ -72,11 +57,29 @@ namespace LineCnt
 
             sb.AppendLine();
             sb.Append(root.FullName);
-            sb.Append(' ', pad - root.FullName.Length + 1);
+            sb.Append(charset.Separator);
+            sb.Append(' ', pad - root.FullName.Length + 2);
             sb.Append(root.TotalLineCount);
             sb.Append(" lines total");
 
             return sb.ToString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void PrintDirectory(IndexDirectory iDirectory, StringBuilder sb, ref IndexCharset charset, ReadOnlySpan<char> indent, int pad, bool isLast)
+        {
+            ReadOnlySpan<char> directoryIndent = IndentationSequence.GetDirectory(indent);
+
+            sb.Append(directoryIndent);
+            sb.Append(isLast ? charset.Bottom : charset.Entry);
+            sb.Append(charset.EntryBody);
+
+            ReadOnlySpan<char> name = iDirectory.Name;
+            sb.Append(name);
+            sb.Append(charset.Separator);
+            sb.Append(' ', pad - name.Length - directoryIndent.Length);
+            sb.Append(iDirectory.TotalLineCount);
+            sb.AppendLine();
         }
 
         private static void PushChildren(Stack<IndexPrintItem> iStack, IndexDirectory iDirectory, int depth)
@@ -85,6 +88,7 @@ namespace LineCnt
             int count = children.Count;
 
             if (count <= 0) return;
+            if (iDirectory.TotalLineCount <= 0) return;
 
             iStack.Push(new IndexPrintItem(children[count - 1], true, depth + 1));
 

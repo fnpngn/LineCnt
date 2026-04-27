@@ -25,5 +25,8 @@ namespace LineCnt
         public IndexCharset Get() => new IndexCharset('│', '├', '└', '─');
     }
 
-    public record struct IndexCharset(char Sibling, char Entry, char Bottom, char EntryBody);
+    public record struct IndexCharset(char Sibling, char Entry, char Bottom, char EntryBody)
+    {
+        public char Separator { readonly get; set; } = Path.DirectorySeparatorChar;
+    };
 }
