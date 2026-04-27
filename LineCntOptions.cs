@@ -18,6 +18,13 @@ namespace LineCnt
 
         private static LineCntOptions _instance;
 
+        public LineCntOptions()
+        {
+            ExcludeDirectories = Patterns = Array.Empty<string>();
+            RootPath = string.Empty;
+            Extensions = null!; // Needs to be initialized, but we do it from args only because it's one expensive object
+        }
+
         public static LineCntOptions Get()
         {
             return _instance;
@@ -33,13 +40,12 @@ namespace LineCnt
         private void ParseArgs(ReadOnlySpan<string> args)
         {
             Extensions = KnownExtensions.ToFrozenSet(StringComparer.Ordinal);
+
             if (args.Length <= 0)
             {
                 RootPath = Directory.GetCurrentDirectory();
                 return;
             }
-
-            RootPath = string.Empty;
 
             if (args[0] == ".")
             {
