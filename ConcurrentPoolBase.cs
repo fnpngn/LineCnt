@@ -47,7 +47,7 @@ namespace LineCnt
 
         protected virtual T Create()
         {
-            Console.WriteLine("NEW DEFAULT");
+            Debug.Print("Non-overloaded pool Create() called: values default-initialized for " + GetType().Name);
             return default(T);
         }
 

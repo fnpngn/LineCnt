@@ -10,6 +10,13 @@ if (options.ShowHelp)
     return;
 }
 
+if ((options.SingleFile))
+{
+    Console.WriteLine("Single file not (yet) supported\n");
+    PrintManual();
+    return;
+}
+
 Cnter.FileExtensionFilters.Add(options.Extensions.Contains);
 
 Index? index = null;
@@ -62,11 +69,14 @@ static void PrintManual()
 LineCnt [path] [-i|is|id] [-h] [-e]  [ext]
     [path] - path of the root directory to start in. default: current
         LineCnt .
-    [ext] - extension or multiple file extensions
+    [ext] - extension or multiple file extensions. If specified, the default known extensions are ignored.
+    If you want to instead include your extensions in the overall search use -e
         LineCnt *.cpp .py js
+    -e  | --extensions 
     -i  | --index - generate an index. Creates .cnt file inside the root folder
     -is | --index-shallow - not implemented (WIP)
     -id | --index-deserialize-only - read existing index file and print contents without actualizing
-    -e  | --exclude - exclude folder names
+    -x  | --exclude - exclude folder names. Default is .vs .git .idea
+        LineCnt -x .vs .git
 """);
 }

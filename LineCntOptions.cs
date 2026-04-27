@@ -8,6 +8,7 @@ namespace LineCnt
         public bool DoSerializeShallow;
         public bool DeserializeOnly;
         public bool ShowHelp;
+        public bool SingleFile;
         public string RootPath;
         public string[] Patterns;
         public string[] ExcludeDirectories;
@@ -55,6 +56,7 @@ namespace LineCnt
             else if (Path.Exists(args[0]))
             {
                 RootPath = args[0];
+                SingleFile = !Directory.Exists(args[0]);
                 args = args.Slice(1, args.Length - 1);
             }
             else
@@ -81,7 +83,7 @@ namespace LineCnt
                 {
                     ShowHelp = true;
                 }
-                else if (IsOptionArg(arg, "e", "exclude"))
+                else if (IsOptionArg(arg, "x", "exclude"))
                 {
                     int taken = TakeExcludeDirectories(args.Slice(index, args.Length - index));
                     index += taken;
@@ -90,6 +92,11 @@ namespace LineCnt
                 {
                     DoSerialize = true;
                     DeserializeOnly = true;
+                }
+                else if (IsOptionArg(arg, "e", "extensions"))
+                {
+                    int taken = TakeExtensions(args.Slice(index, args.Length - index));
+                    index += taken;
                 }
 #if DEBUG
                 else if (IsOptionArg(arg, "dmp", "dump"))
@@ -147,6 +154,33 @@ namespace LineCnt
             exclude.Clear();
             ConcurrentPool<List<string>>.Get().Return(exclude);
 
+            return taken;
+        }
+
+        /// <summary>
+        /// Appends to the known extensions for -e argument
+        /// </summary>
+        private int TakeExtensions(ReadOnlySpan<string> args)
+        {
+            int taken = 0;
+            List<string> extensions = LineCntOptions.KnownExtensions;
+
+            extensions.EnsureCapacity(args.Length);
+
+            Debug.Print("\"Extension\" arguments are not yet normalized");
+
+            foreach (string arg in args)
+            {
+                if (arg[0] == '-')
+                {
+                    break;
+                }
+
+                extensions.Add(arg);
+                taken++;
+            }
+
+            Extensions = extensions.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
             return taken;
         }
 

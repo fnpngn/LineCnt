@@ -105,7 +105,7 @@ namespace LineCnt
                 sb.AppendLine(dir.Value.FullName);
             }
 
-            Console.WriteLine(sb.ToString());
+            Debug.Print(sb.ToString());
         }
 #endif
 

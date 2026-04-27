@@ -65,7 +65,7 @@ namespace LineCnt
             if (index < _count)
             {
 #if DEBUG
-                Console.WriteLine($"File store insert had to copy elements: {_count - index}");
+                Debug.Print($"File store insert had to copy elements: {_count - index}");
 #endif
                 Array.Copy(_keys, index, _keys, index + 1, _count - index);
                 Array.Copy(_values, index, _values, index + 1, _count - index);
