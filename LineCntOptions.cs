@@ -1,6 +1,8 @@
-﻿namespace LineCnt
+﻿using System.Collections.Frozen;
+
+namespace LineCnt
 {
-    public struct LineCntOptions
+    public partial struct LineCntOptions
     {
         public bool DoSerialize;
         public bool DoSerializeShallow;
@@ -8,6 +10,7 @@
         public string RootPath;
         public string[] Patterns;
         public string[] ExcludeDirectories;
+        public FrozenSet<string> Extensions;
 #if DEBUG
         public bool DebugDump;
 #endif
@@ -28,6 +31,7 @@
 
         private void ParseArgs(ReadOnlySpan<string> args)
         {
+            Extensions = KnownExtensions.ToFrozenSet(StringComparer.Ordinal);
             if (args.Length <= 0)
             {
                 RootPath = Directory.GetCurrentDirectory();

@@ -6,27 +6,20 @@ using Index = LineCnt.Index;
 
 namespace LineCnt
 {
+    // Generics for ref structs forbidden by C#
     public delegate bool IndexNodeFilter(string name);
-    // .NET file iterations are kind of slow in any situation
-    // 
-    // Someone on SO said that filtering files manually by extensions is faster than providing wildcards to the system
+    public delegate bool IndexNodeFilterSpan(ReadOnlySpan<char> name);
+
     public static class Cnter
     {
         public static int MaxBytesValid = 5 * 1024 * 1024;
         public static readonly List<IndexNodeFilter> FileExtensionFilters;
-        public static readonly List<IndexNodeFilter> DirectoryFilters;
-        private static readonly HashSet<string> _directoryBlacklist;
-        private static readonly HashSet<string> _knownFileExtensions;
+        public static readonly List<IndexNodeFilterSpan> DirectoryFilters;
 
         static Cnter()
         {
             FileExtensionFilters = new List<IndexNodeFilter>();
-            DirectoryFilters = new List<IndexNodeFilter>();
-            _directoryBlacklist = [".git"];
-            _knownFileExtensions = [".js", ".ts", ".c", ".h", ".cpp", ".hpp", ".cs"];
-
-            DirectoryFilters.Add(x => !_directoryBlacklist.Contains(x));
-            FileExtensionFilters.Add(x => _knownFileExtensions.Contains(x));
+            DirectoryFilters = new List<IndexNodeFilterSpan>() { IsDirectoryBlacklisted };
         }
 
         public static async Task<Index> CntDirectoryAsync(string path, string[] patterns)
@@ -71,7 +64,7 @@ namespace LineCnt
             // Create dir tree
             foreach (DirectoryInfo info in rootDirInfo.EnumerateDirectories("*", SearchOption.AllDirectories))
             {
-                if (IsDirectoryBlacklisted(Path.GetFileName(info.FullName.AsSpan())))
+                if (Filter(DirectoryFilters, Path.GetFileName(info.FullName.AsSpan())))
                 {
                     continue;
                 }
@@ -90,6 +83,8 @@ namespace LineCnt
 
         private static async ValueTask CntIndexDirectoryAsync(IndexDirectory directory, CancellationToken c)
         {
+            var filters = FileExtensionFilters;
+
             foreach (string fileName in Directory.EnumerateFiles(directory.FullName, "*", SearchOption.TopDirectoryOnly))
             {
                 if (new FileInfo(fileName).Length > MaxBytesValid)
@@ -97,8 +92,8 @@ namespace LineCnt
                     continue;
                 }
 
-                if (IsExtBlacklisted(Path.GetExtension(fileName.AsSpan())))
-                {                    
+                if (Filter(filters, Path.GetExtension(fileName)) == false)
+                {
                     continue;
                 }
 
@@ -106,6 +101,32 @@ namespace LineCnt
                 IndexFile iFile = new IndexFile(fileName, count);
                 directory.Add(in iFile);
             }
+        }
+
+        private static bool Filter(List<IndexNodeFilter> filters, string name)
+        {
+            foreach (var filter in filters)
+            {
+                if (filter(name) == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool Filter(List<IndexNodeFilterSpan> filters, ReadOnlySpan<char> name)
+        {
+            foreach (var filter in filters)
+            {
+                if (filter(name) == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public static async Task<uint> CntFileAsync(string filePath)
@@ -125,31 +146,11 @@ namespace LineCnt
         }
 
         [Obsolete("Prototype")]
-        public static bool IsExtKnownText(ReadOnlySpan<char> extension)
-        {
-            if (extension.Length == 0) return false;
-
-            ReadOnlySpan<char> known = ".txt.c.h.cpp.hpp.cs.js.ts.md";
-
-            return known.Contains(extension, StringComparison.OrdinalIgnoreCase);
-        }
-
-        [Obsolete("Prototype")]
-        public static bool IsExtBlacklisted(ReadOnlySpan<char> extension)
-        {
-            if (extension.Length == 0) return false;
-
-            ReadOnlySpan<char> blacklist = ".wav.BIN.mp4.mp3.flac.mkv.unity.exe.obj.zip.dll.jpeg.jpg.ico.png.so.obj";
-
-            return blacklist.Contains(extension, StringComparison.OrdinalIgnoreCase);
-        }
-
-        [Obsolete("Prototype")]
         public static bool IsDirectoryBlacklisted(ReadOnlySpan<char> dir)
         {
             if (dir.Length == 0) return false;
 
-            ReadOnlySpan<char> blacklist = ".git.vs.idea";
+            ReadOnlySpan<char> blacklist = ".git.vs.ideaCMakeCache";
 
 
             return blacklist.Contains(dir, StringComparison.OrdinalIgnoreCase);

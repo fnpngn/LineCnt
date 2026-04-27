@@ -30,6 +30,11 @@ namespace LineCnt
             {
                 var (iDirectory, isLast, depth) = item;
 
+                if (iDirectory.TotalLineCount <= 0)
+                {
+                    continue;
+                }
+
                 if (depth > lastDepth)
                 {
                     indentationSequence.Push(isLast);
@@ -47,14 +52,15 @@ namespace LineCnt
                 }
 
                 ReadOnlySpan<char> indent = indentationSequence.GetSpan();
+                ReadOnlySpan<char> directoryIndent = IndentationSequence.GetDirectory(indent);
 
-                sb.Append(IndentationSequence.GetDirectory(indent));
+                sb.Append(directoryIndent);
                 sb.Append(isLast ? charset.Bottom : charset.Entry);
                 sb.Append(charset.EntryBody);
 
                 ReadOnlySpan<char> name = iDirectory.Name;
                 sb.Append(name);
-                sb.Append(' ', pad - name.Length + 1);
+                sb.Append(' ', pad - name.Length - directoryIndent.Length + 1);
                 sb.Append(iDirectory.TotalLineCount);
                 sb.AppendLine();
 

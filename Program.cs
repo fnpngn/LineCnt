@@ -15,6 +15,8 @@ if (options.DoSerialize || options.DoSerializeShallow)
     Console.WriteLine("Serialized index not yet supported");
 }
 
+Cnter.FileExtensionFilters.Add(options.Extensions.Contains);
+
 Index index;
 if (options.Patterns.Length > 0)
 {

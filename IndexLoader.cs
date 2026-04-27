@@ -14,17 +14,9 @@
         public Index Load(string path)
         {
             using var reader = new BinaryReader(File.OpenRead(path));
-            UInt64 magic = reader.ReadUInt64();
 
-            if (MAGIC != magic)
-            {
-                throw new InvalidDataException("Corrupt or not an index file");
-            }
-
-            bool shallow = reader.ReadBoolean();
-            string rootFullName = reader.ReadString();
-
-            IndexSerializationContext ctx = new IndexSerializationContext(shallow);
+            CheckMagic(reader);
+            IndexSerializationContext ctx = CreateContext(reader);
 
             IndexDirectory root = new IndexDirectory();
             root.Deserialize(reader, in ctx);
@@ -33,7 +25,7 @@
             List<IndexDirectory> children = new List<IndexDirectory>();
             iStack.Push(root);
 
-            while (iStack.TryPop(out IndexDirectory directory))
+            while (iStack.TryPop(out IndexDirectory? directory))
             {
                 int childCount = reader.ReadInt32();
 
@@ -54,6 +46,24 @@
             }
 
             return new Index(root);
+        }
+
+        private static IndexSerializationContext CreateContext(BinaryReader reader)
+        {
+            bool shallow = reader.ReadBoolean();
+            string rootFullName = reader.ReadString();
+
+            return new IndexSerializationContext(shallow);
+        }
+
+        private static void CheckMagic(BinaryReader reader)
+        {
+            UInt64 magic = reader.ReadUInt64();
+
+            if (MAGIC != magic)
+            {
+                throw new InvalidDataException("Corrupt or not an index file");
+            }
         }
 
         public void Save(Index index, string path, bool shallow)

@@ -17,7 +17,7 @@ namespace LineCnt
         public static TSelf Get() => _pool;
 
         public int Capacity => _pool.Capacity;
-        public virtual int InitialCapacity => 10;
+        public virtual int InitialCapacity => 4;
 
         private ConcurrentBag<T> _values;
 
