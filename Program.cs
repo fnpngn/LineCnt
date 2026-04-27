@@ -37,7 +37,7 @@ if (options.DebugDump)
 }
 #endif
 
-if (options.DoSerialize || options.DoSerializeShallow)
+if ((options.DoSerialize || options.DoSerializeShallow) && !options.DeserializeOnly)
 {
     IndexSerializer.RunSerialization(index, options.DoSerializeShallow);
 }

@@ -18,7 +18,8 @@ namespace LineCnt
 
             int pad = CalculatePadLength(root, iStack);
 
-            PrintDirectory(root, sb, ref charset, stackalloc char[2], pad, false);
+            // Root dir print is a special case which does not have base indent so it needs to pad it
+            PrintDirectoryInfo(sb, ref charset, pad + 2, root.Name, root.TotalLineCount, 0);
 
             PrintFiles(iStack, root, sb, ref charset, indentationSequence.GetSpan(), pad);
             PushChildren(iStack, root, 0);
@@ -58,7 +59,7 @@ namespace LineCnt
             sb.AppendLine();
             sb.Append(root.FullName);
             sb.Append(charset.Separator);
-            sb.Append(' ', pad - root.FullName.Length + 2);
+            sb.Append(' ', Math.Max(pad - root.FullName.Length + 2, 1));
             sb.Append(root.TotalLineCount);
             sb.Append(" lines total");
 
@@ -74,11 +75,16 @@ namespace LineCnt
             sb.Append(isLast ? charset.Bottom : charset.Entry);
             sb.Append(charset.EntryBody);
 
-            ReadOnlySpan<char> name = iDirectory.Name;
+            PrintDirectoryInfo(sb, ref charset, pad, iDirectory.Name, iDirectory.LineCount, directoryIndent.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void PrintDirectoryInfo(StringBuilder sb, ref IndexCharset charset, int pad, ReadOnlySpan<char> name, uint lineCount, int indentLength)
+        {
             sb.Append(name);
             sb.Append(charset.Separator);
-            sb.Append(' ', pad - name.Length - directoryIndent.Length);
-            sb.Append(iDirectory.TotalLineCount);
+            sb.Append(' ', pad - name.Length - indentLength);
+            sb.Append(lineCount);
             sb.AppendLine();
         }
 
@@ -145,7 +151,7 @@ namespace LineCnt
                 int dirNameLength = iDirectory.FullName.Length;
                 int indent = IndentationSequence.MockIndentationLength(depth);
 
-                nameLength = iDirectory.Name.Length - iDirectory.FullName.Length + indent;
+                nameLength = iDirectory.Name.Length + indent;
 
                 if (maxLength < nameLength)
                 {

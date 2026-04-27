@@ -6,6 +6,7 @@ namespace LineCnt
     {
         public bool DoSerialize;
         public bool DoSerializeShallow;
+        public bool DeserializeOnly;
         public bool ShowHelp;
         public string RootPath;
         public string[] Patterns;
@@ -50,6 +51,10 @@ namespace LineCnt
                 RootPath = Directory.GetCurrentDirectory();
                 args = args.Slice(1, args.Length - 1);
             }
+            else
+            {
+                RootPath = Directory.GetCurrentDirectory();
+            }
 
             int argsLength = args.Length;
             int index = 0;
@@ -75,6 +80,11 @@ namespace LineCnt
                     int taken = TakeExcludeDirectories(args.Slice(index, args.Length - index));
                     index += taken;
                 }
+                else if (IsOptionArg(arg, "id", "index-deserialize-only"))
+                {
+                    DoSerialize = true;
+                    DeserializeOnly = true;
+                }
 #if DEBUG
                 else if (IsOptionArg(arg, "dmp", "dump"))
                 {
@@ -83,6 +93,7 @@ namespace LineCnt
 #endif
                 else
                 {
+                    ShowHelp = true;
                     break;
                 }
             }
