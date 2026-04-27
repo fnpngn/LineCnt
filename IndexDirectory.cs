@@ -1,4 +1,6 @@
-﻿namespace LineCnt
+﻿using FileStore = LineCnt.SortedStore<string, LineCnt.IndexFile>;
+
+namespace LineCnt
 {
 
     public record struct IndexFile(string Name, uint Count);
@@ -6,7 +8,7 @@
     {
         private const int MIN_CAPACITY = 5;
 
-        public ReadOnlySpan<IndexFile> Files => _files.AsSpan(0, _count);
+        public ReadOnlySpan<IndexFile> Files => _files.Values;
         public ReadOnlySpan<char> Name => FullName.AsSpan(FullName.Length - _nameLength, _nameLength);
 
         public DateTime LastModified { get; set; }
@@ -15,16 +17,13 @@
         public uint TotalLineCount { get; set; }
         public List<IndexDirectory> Children { get; init; }
 
-        private IndexFile[] _files;
-        private SortedList<string, IndexFile> _filesSorted;
-        private int _count;
+        private FileStore _files;
         private int _nameLength;
 
 
         public IndexDirectory(int capacity = 5)
         {
-            _filesSorted = new SortedList<string, IndexFile>(capacity, StringComparer.Ordinal);
-            _files = Array.Empty<IndexFile>();
+            _files = new FileStore(capacity, StringComparer.OrdinalIgnoreCase);
             FullName = string.Empty;
             Children = [];
         }
@@ -33,7 +32,6 @@
             FullName = fullName;
             LastModified = lastModified;
             _nameLength = Path.GetFileName(fullName.AsSpan()).Length;
-            _count = 0;
 
             if (capacity < MIN_CAPACITY)
             {
@@ -41,8 +39,7 @@
             }
 
             Children = new List<IndexDirectory>();
-            _files = new IndexFile[capacity];
-            _filesSorted = new SortedList<string, IndexFile>(capacity, StringComparer.Ordinal);
+            _files = new FileStore(capacity, StringComparer.OrdinalIgnoreCase);
         }
 
         public IndexDirectory(string fullName, in DateTime lastModified)
@@ -50,14 +47,8 @@
 
         public void Add(in IndexFile file)
         {
-            if (_count >= _files.Length)
-            {
-                Array.Resize(ref _files, _files.Length * 2);
-            }
-
-            _files[_count++] = file;
+            _files.Add(file.Name, file);
             LineCount += file.Count;
-            _filesSorted.Add(file.Name, file);
         }
 
         public void Serialize(BinaryWriter writer, in IndexSerializationContext ctx)
@@ -68,8 +59,9 @@
 
             if (!ctx.IsShallow)
             {
-                writer.Write(_count);
-                foreach (IndexFile file in Files)
+                writer.Write(_files.Count);
+
+                foreach (IndexFile file in _files.Values)
                 {
                     writer.Write(file.Name);
                     writer.Write(file.Count);
@@ -83,26 +75,20 @@
             FullName = reader.ReadString();
             LineCount = reader.ReadUInt32();
             LastModified = DateTime.FromBinary(reader.ReadInt64());
+
             _nameLength = Path.GetFileName(FullName.AsSpan()).Length;
 
             if (!ctx.IsShallow)
             {
                 int count = reader.ReadInt32();
-                if (count > _files.Length)
-                {
-                    _files = new IndexFile[count];
-                }
+                _files.EnsureCapacity(count);
 
                 for (int i = 0; i < count; i++)
                 {
-                    _files[i] = new IndexFile(reader.ReadString(), reader.ReadUInt32());
+                    string name = reader.ReadString();
+                    uint fileCount = reader.ReadUInt32();
+                    _files.Add(name, new IndexFile(name, fileCount));
                 }
-
-                _count = count;
-            }
-            else
-            {
-                _count = 0;
             }
         }
     }

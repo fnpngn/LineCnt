@@ -10,21 +10,24 @@ if (options.ShowHelp)
     return;
 }
 
-if (options.DoSerialize || options.DoSerializeShallow)
-{
-    Console.WriteLine("Serialized index not yet supported");
-}
-
 Cnter.FileExtensionFilters.Add(options.Extensions.Contains);
 
-Index index;
-if (options.Patterns.Length > 0)
+Index? index = null;
+if (options.DoSerialize || options.DoSerializeShallow)
 {
-    index = await Cnter.CntDirectoryAsync(options.RootPath, options.Patterns);
+    index = IndexSerializer.Load(IndexSerializer.PathToIndex(options.RootPath));
 }
-else
+
+if (index?.RootDirectory == null)
 {
-    index = await Cnter.CntDirectoryAsync(options.RootPath);
+    if (options.Patterns.Length > 0)
+    {
+        index = await Cnter.CntDirectoryAsync(options.RootPath, options.Patterns);
+    }
+    else
+    {
+        index = await Cnter.CntDirectoryAsync(options.RootPath);
+    }
 }
 
 #if DEBUG
@@ -34,7 +37,16 @@ if (options.DebugDump)
 }
 #endif
 
+if (options.DoSerialize || options.DoSerializeShallow)
+{
+    IndexSerializer.RunSerialization(index, options.DoSerializeShallow);
+}
+
 Console.WriteLine(IndexPrinter.ToOutStringIndexedDirectories(index.RootDirectory));
+Console.Beep();
+await Console.Out.FlushAsync();
+
+await IndexSerializer.SerializationTask;
 
 static void PrintManual()
 {
