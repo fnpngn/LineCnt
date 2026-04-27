@@ -41,14 +41,14 @@ namespace LineCnt
 
             RootPath = string.Empty;
 
-            if (Path.Exists(args[0]))
-            {
-                RootPath = args[0];
-                args = args.Slice(1, args.Length - 1);
-            }
-            else if (args[0] == ".")
+            if (args[0] == ".")
             {
                 RootPath = Directory.GetCurrentDirectory();
+                args = args.Slice(1, args.Length - 1);
+            }
+            else if (Path.Exists(args[0]))
+            {
+                RootPath = args[0];
                 args = args.Slice(1, args.Length - 1);
             }
             else

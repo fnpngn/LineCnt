@@ -20,6 +20,12 @@ if (options.DoSerialize || options.DoSerializeShallow)
 
 if (index?.RootDirectory == null)
 {
+    if (options.DeserializeOnly)
+    {
+        Console.WriteLine($"[{options.RootPath}] Index failed to deserialize or is void. Stopped.");
+        return;
+    }
+
     if (options.Patterns.Length > 0)
     {
         index = await Cnter.CntDirectoryAsync(options.RootPath, options.Patterns);

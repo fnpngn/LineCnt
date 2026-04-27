@@ -30,7 +30,7 @@ namespace LineCnt
             if (File.Exists(path))
             {
                 Index index = LoadFile(path);
-                Console.WriteLine("Loaded index " + path);
+                Console.WriteLine("Loaded index " + Path.GetFileName(path));
                 return index;
             }
 
