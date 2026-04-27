@@ -54,11 +54,19 @@ await Console.Out.FlushAsync();
 
 await IndexSerializer.SerializationTask;
 
+Console.WriteLine();
+
 static void PrintManual()
 {
-    Console.WriteLine("LineCnt [path] [ext]..");
-    Console.WriteLine("LineCnt [path] [ext]..");
-    Console.WriteLine("[path]: optional, path of the root directory to start in");
-    Console.WriteLine("[ext]: extension (wildcard) or multiple extensions: ");
-    Console.WriteLine("\t LineCnt *.cpp .py js");
+    Console.WriteLine("""
+LineCnt [path] [-i|is|id] [-h] [-e]  [ext]
+    [path] - path of the root directory to start in. default: current
+        LineCnt .
+    [ext] - extension or multiple file extensions
+        LineCnt *.cpp .py js
+    -i  | --index - generate an index. Creates .cnt file inside the root folder
+    -is | --index-shallow - not implemented (WIP)
+    -id | --index-deserialize-only - read existing index file and print contents without actualizing
+    -e  | --exclude - exclude folder names
+""");
 }
